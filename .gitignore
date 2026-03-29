@@ -1,0 +1,17 @@
+# Build outputs
+*.txt
+/build/
+/bin/
+/out/
+
+# Executables
+*.exe
+*.out
+raymarcher
+
+# Scripts
+build.sh
+
+# OS junk
+.DS_Store
+Thumbs.db
