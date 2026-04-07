@@ -9,8 +9,6 @@
 *.out
 raymarcher
 
-# Scripts
-build.sh
 
 # OS junk
 .DS_Store

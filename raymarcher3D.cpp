@@ -38,64 +38,104 @@ Vector3 getNormal(Vector3 p,std::vector<SDF3D*>& objects){
 }
 
 Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
-    float totalDist = 0.0f;
-    Vector3 p = origin;
+   float totalDist = 0.0f;
+   Vector3 p = origin;
 
-    for(int i = 0;i < maxSteps;i++){
-        float minDist = maxDistance;
+   Vector3 lightPos = {5,5,-5}; 
 
-        for(auto obj : objects){
-            float d = obj->distance(p);
-            if(d < minDist){
-                minDist = d;
-            }
-        }
+   for(int i = 0;i<maxSteps;i++){
+    float minDist = maxDistance;
 
-        if(minDist < epsilon){
-            //light-direction
-            Vector3 lightDir = {-1,-1,-1};
-            float len = sqrtf(lightDir.x*lightDir.x + lightDir.y*lightDir.y + lightDir.z*lightDir.z);
-            lightDir.x = lightDir.x/len;
-            lightDir.y = lightDir.y/len;
-            lightDir.z = lightDir.z/len;
-
-            //surface-normal
-            Vector3 normal = getNormal(p,objects);
-
-            //diffuse shading
-            float diff = normal.x*lightDir.x + normal.y*lightDir.y + normal.z*lightDir.z;
-            if(diff < 0){
-                diff = 0;
-            }
-
-            float ambient = 0.2f;
-            float lighting = ambient + diff*0.8f;
-
-            //convertin color
-            int shade = (int)(lighting*255);
-            if(shade < 0){
-                shade = 0; //ensures no weird ahh overflow
-            }
-            if(shade > 255){
-                shade = 255; //samehere
-            }
-            return Color{
-                (unsigned char)shade,
-                (unsigned char)shade,
-                (unsigned char)shade,
-                255
-            };
-        }
-
-        totalDist += minDist;
-
-        p.x = origin.x + dir.x*totalDist;
-        p.y = origin.y + dir.y*totalDist;
-        p.z = origin.z + dir.z*totalDist;
-        
-        if(totalDist > maxDistance){
-            break;
+    for(auto obj : objects){
+        float d = obj->distance(p);
+        if(d < minDist){
+            minDist = d;
         }
     }
-    return RED;
+    
+    //hit
+    if(minDist < epsilon){
+        
+        Vector3 normal = getNormal(p,objects);
+
+        Vector3 lightDir = {
+            lightPos.x - p.x,
+            lightPos.y - p.y,
+            lightPos.z - p.z
+        };
+
+        float len = sqrtf(lightDir.x*lightDir.x + lightDir.y*lightDir.y + lightDir.z*lightDir.z);
+        lightDir.x /= len;
+        lightDir.y /= len;
+        lightDir.z /= len;
+
+        //diffuse
+        float diff = normal.x*lightDir.x + normal.y*lightDir.y + normal.z*lightDir.z;
+        diff = fmaxf(diff,0.0f);
+
+        float shadow = 1.0f;
+        float t = 0.02f;
+
+        for(int j = 0 ; j < 50 ; j++){
+            Vector3 sp = {
+                p.x + lightDir.x*t,
+                p.y + lightDir.y*t,
+                p.z + lightDir.z*t
+            };
+
+            float h = maxDistance;
+            for(auto obj : objects){
+                float d = obj->distance(sp);
+                if(d < h){
+                    h = d;
+                }
+            }
+
+            if(h < 0.001f){
+                shadow = 0.2f; //in shadow (dtm) 
+                break;
+            }
+
+            t+=h;
+            if(t > 20.0f){
+                break;
+            }
+        }
+
+        float ambient = 0.2f;
+        float lighting = ambient + diff*shadow*0.8f;
+
+        float fog = expf(-0.02f*totalDist);
+        lighting*=fog;
+
+        int shade = (int)(lighting*255);
+        shade = (shade < 0) ? 0 : (shade > 255 ? 255 : shade);
+
+        return Color{
+            (unsigned char)(shade),
+            (unsigned char)(shade*0.9f),
+            (unsigned char)(shade*0.8f),
+            255
+        };
+    }
+
+    totalDist += minDist;
+
+    if(totalDist > maxDistance){
+        break;
+    }
+
+    p.x = origin.x + dir.x*totalDist;
+    p.y = origin.y + dir.y*totalDist;
+    p.z = origin.z + dir.z*totalDist;
+   }
+
+   float t = 0.5f*(dir.y+1.0f);
+   return Color{
+    (unsigned char)((1.0f - t)*200 + t*135),
+    (unsigned char)((1.0f - t)*220 + t*206),
+    (unsigned char)((1.0f - t)*255 + t*235),
+    255
+   };
+   
 }

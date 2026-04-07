@@ -20,6 +20,16 @@ struct Sphere3D : SDF3D{
     }
 };
 
+struct Plane3D : SDF3D{
+    float y;
+
+    Plane3D(float height) : y(height) {}
+
+    float distance(Vector3 p) override{
+        return p.y - y;
+    }
+};
+
 struct RayMarcher3D{
     std::vector<SDF3D*> objects;
 

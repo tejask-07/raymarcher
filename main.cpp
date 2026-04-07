@@ -20,6 +20,8 @@ int main(){
 
     RayMarcher3D marcher3d;
     Sphere3D s1({0,0,5},1.5f);
+    Plane3D ground(-2.0f);
+    marcher3d.addObject(&ground);
     marcher3d.addObject(&s1);
 
     Mode currentMode = NONE;
