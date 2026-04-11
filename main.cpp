@@ -1,12 +1,7 @@
 #include "raylib.h"
-#include "raymarcher2D.h"
 #include "raymarcher3D.h"
 
-enum Mode{
-    NONE,
-    MODE_2D,
-    MODE_3D
-};
+bool started = false;
 
 int main(){
     const int screenWidth = 800;
@@ -14,58 +9,39 @@ int main(){
 
     InitWindow(screenWidth,screenHeight,"raymarcher");
 
-    RayMarcher2D marcher2D;
-    Circle c1({400,300},100);
-    marcher2D.addObject(&c1);
-
     RayMarcher3D marcher3d;
-    Sphere3D s1({0,0,5},1.5f);
-    Plane3D ground(-2.0f);
-    marcher3d.addObject(&ground);
-    marcher3d.addObject(&s1);
+    Sphere3D s1({0,0,5},1.5f,RED);
+    Sphere3D s2({2,0,7},1.0f,BLUE);
+    Sphere3D s3({-2,0,6},1.0f,GREEN);
 
-    Mode currentMode = NONE;
+    Plane3D ground(-2.0f,LIGHTGRAY);
+
+    marcher3d.addObject(&s1);
+    marcher3d.addObject(&s2);
+    marcher3d.addObject(&s3);
+
+    marcher3d.addObject(&ground);
 
     while(!WindowShouldClose()){
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        if(currentMode == NONE){
-            DrawText("select mode",300,200,20,BLACK);
+        if(!started){
+            DrawText("3D RayMarcher",300,250,20,BLACK);
 
-            Rectangle btn2D = {300,250,200,50};
-            Rectangle btn3D = {300,320,200,50};
+            Rectangle btn = {300,300,200,50};
 
-            DrawRectangleRec(btn2D,LIGHTGRAY);
-            DrawRectangleRec(btn3D,LIGHTGRAY);
-            DrawText("2D raymarch",340,265,20,BLACK);
-            DrawText("3D raymarch",340,335,20,BLACK);
+            DrawRectangleRec(btn,LIGHTGRAY);
+            DrawText("Start",360,315,20,BLACK);
 
             Vector2 mousePoint = GetMousePosition();
             if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-                if(CheckCollisionPointRec(mousePoint,btn2D)){
-                    currentMode = MODE_2D;
-                }
-                if(CheckCollisionPointRec(mousePoint,btn3D)){
-                    currentMode = MODE_3D;
+                if(CheckCollisionPointRec(mousePoint,btn)){
+                    started = true;
                 }
             }
         }
-        else if(currentMode == MODE_2D){
-            for(int y = 0;y<screenHeight;y+=2){
-                for(int x = 0;x<screenWidth;x+=2){
-                    Vector2 origin = {100,300}; //cam origin
-                    Vector2 dir = {x-origin.x,y-origin.y};
-                    float len = sqrtf(dir.x*dir.x + dir.y*dir.y);
-                    dir.x = dir.x/len;
-                    dir.y = dir.y/len;
-
-                    Color col = marcher2D.marchRay(origin,dir);
-                    DrawPixel(x,y,col);
-                }
-            }
-        }
-        else if(currentMode == MODE_3D){
+        else{
            static Vector3 cameraPos = {0,0,-5}; 
            static float yaw = 0.0f; //left-right rotation
            static float pitch = 0.0f; //up-down rotation

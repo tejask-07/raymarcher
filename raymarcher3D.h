@@ -3,6 +3,7 @@
 #include <vector>
 
 struct SDF3D{
+    Color color;
     virtual float distance(Vector3 p) = 0;
 };
 
@@ -10,7 +11,11 @@ struct Sphere3D : SDF3D{
     Vector3 center;
     float radius;
 
-    Sphere3D(Vector3 c , float r) : center(c) , radius(r) {}
+    Sphere3D(Vector3 c , float r,Color col){
+        center = c;
+        radius = r;
+        color = col;
+    }
 
     float distance(Vector3 p) override{
         float dx = p.x - center.x;
@@ -23,7 +28,10 @@ struct Sphere3D : SDF3D{
 struct Plane3D : SDF3D{
     float y;
 
-    Plane3D(float height) : y(height) {}
+    Plane3D(float height,Color col){
+        y = height;
+        color = col;
+    }
 
     float distance(Vector3 p) override{
         return p.y - y;

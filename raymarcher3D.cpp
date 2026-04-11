@@ -37,6 +37,15 @@ Vector3 getNormal(Vector3 p,std::vector<SDF3D*>& objects){
     return {n.x,n.y,n.z};
 }
 
+Vector3 reflect(Vector3 d,Vector3 n){
+    float dot = d.x*n.x + d.y*n.y + d.z*n.z;
+    return{
+        d.x - 2.0f*dot*n.x,
+        d.y - 2.0f*dot*n.y,
+        d.z - 2.0f*dot*n.z
+    };
+}
+
 Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
    float totalDist = 0.0f;
    Vector3 p = origin;
@@ -45,11 +54,13 @@ Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
 
    for(int i = 0;i<maxSteps;i++){
     float minDist = maxDistance;
+    SDF3D* hitObject = nullptr;
 
     for(auto obj : objects){
         float d = obj->distance(p);
         if(d < minDist){
             minDist = d;
+            hitObject = obj;
         }
     }
     
@@ -108,13 +119,25 @@ Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
         float fog = expf(-0.02f*totalDist);
         lighting*=fog;
 
-        int shade = (int)(lighting*255);
-        shade = (shade < 0) ? 0 : (shade > 255 ? 255 : shade);
+        Color base = hitObject ? hitObject->color : WHITE;
+
+        Vector3 reflDir = reflect(dir,normal);
+
+        Color reflCol = marchRay(
+            {
+                p.x + normal.x*epsilon*2,
+                p.y + normal.y*epsilon*2,
+                p.z + normal.z*epsilon*2
+            },
+            reflDir
+        );
+
+        float reflectivity = 0.3f;
 
         return Color{
-            (unsigned char)(shade),
-            (unsigned char)(shade*0.9f),
-            (unsigned char)(shade*0.8f),
+            (unsigned char)(base.r*lighting*(1-reflectivity)+reflCol.r*reflectivity),
+            (unsigned char)(base.g*lighting*(1-reflectivity)+reflCol.g*reflectivity),
+            (unsigned char)(base.b*lighting*(1-reflectivity)+reflCol.b*reflectivity),
             255
         };
     }
