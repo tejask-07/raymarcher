@@ -46,7 +46,12 @@ Vector3 reflect(Vector3 d,Vector3 n){
     };
 }
 
-Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
+Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir,int depth){
+
+   if(depth > 1){
+    return BLACK;
+   }
+
    float totalDist = 0.0f;
    Vector3 p = origin;
 
@@ -87,7 +92,7 @@ Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
         float shadow = 1.0f;
         float t = 0.02f;
 
-        for(int j = 0 ; j < 50 ; j++){
+        for(int j = 0 ; j < 20 ; j++){
             Vector3 sp = {
                 p.x + lightDir.x*t,
                 p.y + lightDir.y*t,
@@ -129,20 +134,33 @@ Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
                 p.y + normal.y*epsilon*2,
                 p.z + normal.z*epsilon*2
             },
-            reflDir
+            reflDir,
+            depth+1
         );
 
-        float reflectivity = 0.3f;
+        float reflectivity = 0.2f;
+
+        if(hitObject && hitObject->color.r == LIGHTGRAY.r){
+            reflectivity = 0.0f;
+        }
+
+        float r = base.r*lighting*(1-reflectivity)+reflCol.r*reflectivity;
+        float g = base.g*lighting*(1-reflectivity)+reflCol.g*reflectivity; 
+        float b = base.b*lighting*(1-reflectivity)+reflCol.b*reflectivity;
+
+        r = fminf(r,255.0f);
+        g = fminf(g,255.0f);
+        b = fminf(b,255.0f);
 
         return Color{
-            (unsigned char)(base.r*lighting*(1-reflectivity)+reflCol.r*reflectivity),
-            (unsigned char)(base.g*lighting*(1-reflectivity)+reflCol.g*reflectivity),
-            (unsigned char)(base.b*lighting*(1-reflectivity)+reflCol.b*reflectivity),
+            (unsigned char)r,
+            (unsigned char)g,
+            (unsigned char)b,
             255
         };
     }
 
-    totalDist += minDist;
+    totalDist += fmaxf(minDist,0.005f);
 
     if(totalDist > maxDistance){
         break;
@@ -154,6 +172,7 @@ Color RayMarcher3D :: marchRay(Vector3 origin,Vector3 dir){
    }
 
    float t = 0.5f*(dir.y+1.0f);
+   
    return Color{
     (unsigned char)((1.0f - t)*200 + t*135),
     (unsigned char)((1.0f - t)*220 + t*206),

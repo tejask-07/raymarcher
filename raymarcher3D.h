@@ -41,10 +41,10 @@ struct Plane3D : SDF3D{
 struct RayMarcher3D{
     std::vector<SDF3D*> objects;
 
-    int maxSteps = 100;
-    float epsilon = 0.01f;
+    int maxSteps = 60;
+    float epsilon = 0.02f;
     float maxDistance = 100.0f;
 
     void addObject(SDF3D* obj);
-    Color marchRay(Vector3 origin,Vector3 dir);
+    Color marchRay(Vector3 origin,Vector3 dir,int depth = 0);
 };
